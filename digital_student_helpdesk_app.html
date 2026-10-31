@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduDesk AI - Digital Student Helpdesk</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f3ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .glass-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+    .glass-input:focus {
+      border-color: #6366f1;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="glass-panel sticky top-0 z-40 border-b border-slate-800/80 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <i class="fa-solid font-bold fa-headset text-xl text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
+            EduDesk AI
+          </h1>
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">v2.4 Smart AI</span>
+        </div>
+        <p class="text-xs text-slate-400 hidden sm:block">KL University Digital Student Helpdesk & Support Portal</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center gap-1 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
+      <button onclick="switchTab('student')" id="nav-student" class="nav-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md">
+        <i class="fa-solid fa-user-graduate"></i>
+        <span>Student Portal</span>
+      </button>
+      <button onclick="switchTab('staff')" id="nav-staff" class="nav-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Staff Workspace</span>
+        <span id="open-tickets-badge" class="ml-1 px-1.5 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded-full font-bold">4</span>
+      </button>
+      <button onclick="switchTab('sandbox')" id="nav-sandbox" class="nav-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-robot"></i>
+        <span>AI Classifier Sandbox</span>
+      </button>
+      <button onclick="switchTab('analytics')" id="nav-analytics" class="nav-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition-all text-slate-400 hover:text-slate-200 flex items-center gap-2">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Analytics & Metrics</span>
+      </button>
+    </nav>
+
+    <!-- User Profile Quick View -->
+    <div class="hidden xl:flex items-center gap-3 pl-3 border-l border-slate-800">
+      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-indigo-500/40">
+      <div class="text-left">
+        <p class="text-xs font-semibold text-slate-200" id="current-user-name">Ananya Sharma</p>
+        <p class="text-[10px] text-slate-400" id="current-user-role">Student (ID: 2026-CSE-042)</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Router Container -->
+  <main class="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+
+    <!-- ==================== TAB 1: STUDENT PORTAL ==================== -->
+    <section id="view-student" class="tab-content space-y-6">
+      
+      <!-- Welcome Banner -->
+      <div class="glass-panel p-6 rounded-2xl relative overflow-hidden bg-gradient-to-r from-indigo-950/60 via-slate-900/80 to-slate-900 border border-indigo-500/20">
+        <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              Welcome to Student Support 👋
+            </h2>
+            <p class="text-slate-400 text-sm mt-1 max-w-2xl">
+              Submit your academic, hostel, finance, or examination queries. Our AI engine automatically categorizes tickets and routes them directly to department specialists for rapid resolution.
+            </p>
+          </div>
+          <button onclick="openNewTicketModal()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle"></i>
+            <span>Raise New Ticket</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Stats bar for Student -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">Total Tickets Raised</p>
+          <p class="text-2xl font-bold text-slate-100 mt-1" id="stat-student-total">0</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">In Progress</p>
+          <p class="text-2xl font-bold text-amber-400 mt-1" id="stat-student-progress">0</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">Resolved</p>
+          <p class="text-2xl font-bold text-emerald-400 mt-1" id="stat-student-resolved">0</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">Avg Resolution Time</p>
+          <p class="text-2xl font-bold text-indigo-400 mt-1">4.2 hrs</p>
+        </div>
+      </div>
+
+      <!-- Active & Historical Tickets Section -->
+      <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-white">My Support Tickets</h3>
+            <p class="text-xs text-slate-400">Track and manage your submitted requests in real time</p>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="relative min-w-[200px]">
+              <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="student-search" onkeyup="renderStudentTickets()" placeholder="Search tickets..." class="glass-input text-xs pl-8 pr-3 py-2 rounded-lg w-full">
+            </div>
+            <select id="student-filter-status" onchange="renderStudentTickets()" class="glass-input text-xs px-3 py-2 rounded-lg bg-slate-900">
+              <option value="ALL">All Statuses</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
+            </select>
+            <select id="student-filter-dept" onchange="renderStudentTickets()" class="glass-input text-xs px-3 py-2 rounded-lg bg-slate-900">
+              <option value="ALL">All Departments</option>
+              <option value="Academic">Academic</option>
+              <option value="Finance">Finance</option>
+              <option value="Hostel">Hostel</option>
+              <option value="Examination">Examination</option>
+              <option value="IT Support">IT Support</option>
+              <option value="Transport">Transport</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Student Ticket List -->
+        <div id="student-ticket-container" class="space-y-3 pt-2">
+          <!-- Dynamic rendering -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ==================== TAB 2: STAFF & ADMIN WORKSPACE ==================== -->
+    <section id="view-staff" class="tab-content space-y-6 hidden">
+      
+      <!-- Workspace Header -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            Staff Operations Center
+            <span class="text-xs px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">Admin Panel</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Manage ticket assignments, update resolution statuses, and respond to student inquiries.</p>
+        </div>
+
+        <!-- View Mode Switcher -->
+        <div class="flex items-center gap-2">
+          <div class="bg-slate-900 p-1 rounded-lg border border-slate-800 flex items-center">
+            <button onclick="setStaffView('table')" id="btn-view-table" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white transition-all">
+              <i class="fa-solid fa-list mr-1"></i> Data Table
+            </button>
+            <button onclick="setStaffView('kanban')" id="btn-view-kanban" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition-all">
+              <i class="fa-solid fa-columns mr-1"></i> Kanban Board
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-sky-500">
+          <p class="text-[11px] text-slate-400 font-medium">New / Unassigned</p>
+          <p class="text-xl font-bold text-white mt-1" id="staff-stat-unassigned">0</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-amber-500">
+          <p class="text-[11px] text-slate-400 font-medium">In Progress</p>
+          <p class="text-xl font-bold text-white mt-1" id="staff-stat-progress">0</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-emerald-500">
+          <p class="text-[11px] text-slate-400 font-medium">Resolved Today</p>
+          <p class="text-xl font-bold text-white mt-1" id="staff-stat-resolved">0</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-rose-500">
+          <p class="text-[11px] text-slate-400 font-medium">Urgent Priority</p>
+          <p class="text-xl font-bold text-rose-400 mt-1" id="staff-stat-urgent">0</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-xl border-l-4 border-l-indigo-500 col-span-2 md:col-span-1">
+          <p class="text-[11px] text-slate-400 font-medium">SLA Compliance</p>
+          <p class="text-xl font-bold text-indigo-400 mt-1">96.4%</p>
+        </div>
+      </div>
+
+      <!-- Staff Filters -->
+      <div class="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div class="relative flex-1 md:w-64">
+            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="staff-search" onkeyup="renderStaffView()" placeholder="Filter by Student ID, Query..." class="glass-input text-xs pl-8 pr-3 py-2 rounded-lg w-full">
+          </div>
+          <select id="staff-filter-dept" onchange="renderStaffView()" class="glass-input text-xs px-3 py-2 rounded-lg bg-slate-900">
+            <option value="ALL">All Departments</option>
+            <option value="Academic">Academic</option>
+            <option value="Finance">Finance</option>
+            <option value="Hostel">Hostel</option>
+            <option value="Examination">Examination</option>
+            <option value="IT Support">IT Support</option>
+            <option value="Transport">Transport</option>
+          </select>
+          <select id="staff-filter-priority" onchange="renderStaffView()" class="glass-input text-xs px-3 py-2 rounded-lg bg-slate-900">
+            <option value="ALL">All Priorities</option>
+            <option value="Urgent">Urgent</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <p class="text-xs text-slate-400"><span id="staff-results-count">0</span> tickets found</p>
+      </div>
+
+      <!-- VIEW 1: Data Table View -->
+      <div id="staff-table-view" class="glass-panel rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/90 text-slate-400 uppercase font-semibold text-[11px] border-b border-slate-800">
+              <tr>
+                <th class="p-3.5">Ticket ID</th>
+                <th class="p-3.5">Student</th>
+                <th class="p-3.5">Subject & Category</th>
+                <th class="p-3.5">Department</th>
+                <th class="p-3.5">Priority</th>
+                <th class="p-3.5">Assigned Staff</th>
+                <th class="p-3.5">Status</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="staff-table-body" class="divide-y divide-slate-800/60">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VIEW 2: Kanban View -->
+      <div id="staff-kanban-view" class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden">
+        <!-- Open Column -->
+        <div class="glass-panel p-4 rounded-2xl flex flex-col gap-3 min-h-[500px]">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="font-bold text-xs uppercase tracking-wider text-sky-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-sky-400"></span> Open
+            </span>
+            <span id="kanban-count-open" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
+          </div>
+          <div id="kanban-col-open" class="space-y-3 flex-1"></div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="glass-panel p-4 rounded-2xl flex flex-col gap-3 min-h-[500px]">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> In Progress
+            </span>
+            <span id="kanban-count-progress" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
+          </div>
+          <div id="kanban-col-progress" class="space-y-3 flex-1"></div>
+        </div>
+
+        <!-- Resolved Column -->
+        <div class="glass-panel p-4 rounded-2xl flex flex-col gap-3 min-h-[500px]">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Resolved
+            </span>
+            <span id="kanban-count-resolved" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
+          </div>
+          <div id="kanban-col-resolved" class="space-y-3 flex-1"></div>
+        </div>
+
+        <!-- Closed Column -->
+        <div class="glass-panel p-4 rounded-2xl flex flex-col gap-3 min-h-[500px]">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-500"></span> Closed
+            </span>
+            <span id="kanban-count-closed" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">0</span>
+          </div>
+          <div id="kanban-col-closed" class="space-y-3 flex-1"></div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 3: AI CLASSIFIER SANDBOX ==================== -->
+    <section id="view-sandbox" class="tab-content space-y-6 hidden">
+      
+      <div class="glass-panel p-6 rounded-2xl space-y-2 bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-brain text-indigo-400"></i> AI Query Classifier & Knowledge Engine
+        </h2>
+        <p class="text-sm text-slate-400">
+          Simulating Python NLP query processing pipeline: Intent Recognition, Priority Scoring, Knowledge Graph Search, and SLA Auto-Estimation.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Input Sandbox -->
+        <div class="lg:col-span-7 glass-panel p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-white text-base">NLP Input Sandbox</h3>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-1 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Python Model v3.1</span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-medium text-slate-300">Enter sample student query text:</label>
+            <textarea id="sandbox-query-input" rows="5" class="glass-input text-sm p-3.5 rounded-xl w-full leading-relaxed" placeholder="Type or select a sample query below... e.g. I need an extension for paying my semester fee because my bank loan disbursement is delayed."></textarea>
+          </div>
+
+          <!-- Quick Test Samples -->
+          <div class="space-y-2">
+            <p class="text-xs text-slate-400">Or click a sample query preset:</p>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="loadSandboxPreset(1)" class="px-2.5 py-1 rounded-lg text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 text-slate-300 transition-all">
+                🎓 Hall Ticket Issue
+              </button>
+              <button onclick="loadSandboxPreset(2)" class="px-2.5 py-1 rounded-lg text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 text-slate-300 transition-all">
+                💳 Fee Loan Refund
+              </button>
+              <button onclick="loadSandboxPreset(3)" class="px-2.5 py-1 rounded-lg text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 text-slate-300 transition-all">
+                🛏️ Hostel AC Breakdown
+              </button>
+              <button onclick="loadSandboxPreset(4)" class="px-2.5 py-1 rounded-lg text-xs bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 text-slate-300 transition-all">
+                🌐 Campus WiFi Access
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="runSandboxAI()" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-bolt"></i>
+              <span>Process Text & Execute AI Pipeline</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-time Output & Diagnostic Panel -->
+        <div class="lg:col-span-5 glass-panel p-6 rounded-2xl space-y-4">
+          <h3 class="font-bold text-white text-base border-b border-slate-800 pb-3 flex items-center justify-between">
+            <span>AI Inference Output</span>
+            <span id="ai-confidence-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Confidence: --
+            </span>
+          </h3>
+
+          <div class="space-y-3 text-xs">
+            
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+              <p class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Predicted Department</p>
+              <p id="ai-out-dept" class="text-sm font-bold text-indigo-300">--</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                <p class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Assigned Priority</p>
+                <p id="ai-out-priority" class="text-sm font-bold text-slate-200">--</p>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                <p class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Target SLA</p>
+                <p id="ai-out-sla" class="text-sm font-bold text-slate-200">--</p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+              <p class="text-slate-400 uppercase text-[10px] font-bold tracking-wider">Extracted Keywords / Tags</p>
+              <div id="ai-out-tags" class="flex flex-wrap gap-1 mt-1">
+                <span class="text-slate-500 italic">No output yet</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <p class="text-slate-400 uppercase text-[10px] font-bold tracking-wider flex items-center justify-between">
+                <span>Knowledge Base Instant Resolution</span>
+                <i class="fa-solid fa-lightbulb text-amber-400"></i>
+              </p>
+              <p id="ai-out-kb" class="text-slate-300 leading-relaxed italic">
+                Enter query text and run inference to generate initial solution...
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 4: ANALYTICS & METRICS ==================== -->
+    <section id="view-analytics" class="tab-content space-y-6 hidden">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-white">Helpdesk Analytics & Intelligence</h2>
+          <p class="text-xs text-slate-400">System performance, department loads, SLA compliance, and AI accuracy.</p>
+        </div>
+        <button onclick="exportReport()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 flex items-center gap-2">
+          <i class="fa-solid fa-download"></i>
+          <span>Export Summary Report (CSV)</span>
+        </button>
+      </div>
+
+      <!-- Key KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-panel p-5 rounded-2xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Total Tickets Processed</span>
+            <i class="fa-solid fa-ticket text-indigo-400"></i>
+          </div>
+          <p class="text-3xl font-extrabold text-white mt-1">1,428</p>
+          <p class="text-[10px] text-emerald-400 font-medium">↑ +12.4% from last month</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Resolution Success Rate</span>
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+          </div>
+          <p class="text-3xl font-extrabold text-emerald-400 mt-1">94.8%</p>
+          <p class="text-[10px] text-slate-400 font-medium">Target threshold: 90%</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Avg Resolution Time</span>
+            <i class="fa-solid fa-clock text-amber-400"></i>
+          </div>
+          <p class="text-3xl font-extrabold text-amber-300 mt-1">3.8 hrs</p>
+          <p class="text-[10px] text-emerald-400 font-medium">↓ 45 mins faster with AI auto-routing</p>
+        </div>
+
+        <div class="glass-panel p-5 rounded-2xl space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">AI Classification Accuracy</span>
+            <i class="fa-solid fa-microchip text-indigo-400"></i>
+          </div>
+          <p class="text-3xl font-extrabold text-indigo-300 mt-1">92.6%</p>
+          <p class="text-[10px] text-indigo-400 font-medium">Based on 1,200 verified tickets</p>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Department Volume Breakdown -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <h3 class="font-bold text-white text-sm">Tickets by Department</h3>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="chart-department"></canvas>
+          </div>
+        </div>
+
+        <!-- Monthly Resolution Trend -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4">
+          <h3 class="font-bold text-white text-sm">Monthly Resolution Volume & SLA Compliance</h3>
+          <div class="h-64 flex items-center justify-center">
+            <canvas id="chart-trends"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Operational Breakdown Table -->
+      <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <h3 class="font-bold text-white text-sm">Departmental Operational Performance Summary</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-bold">
+              <tr>
+                <th class="p-3">Department</th>
+                <th class="p-3">Head Officer</th>
+                <th class="p-3">Total Assigned</th>
+                <th class="p-3">Resolved</th>
+                <th class="p-3">Pending</th>
+                <th class="p-3">Avg Response Time</th>
+                <th class="p-3">Satisfaction Rating</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/80">
+              <tr>
+                <td class="p-3 font-semibold text-white">Academic</td>
+                <td class="p-3">Dr. Ramesh Kumar</td>
+                <td class="p-3">412</td>
+                <td class="p-3 text-emerald-400 font-bold">398</td>
+                <td class="p-3">14</td>
+                <td class="p-3">2.4 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.8 / 5</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Finance</td>
+                <td class="p-3">Ms. S. Lakshmi</td>
+                <td class="p-3">320</td>
+                <td class="p-3 text-emerald-400 font-bold">301</td>
+                <td class="p-3">19</td>
+                <td class="p-3">5.1 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.6 / 5</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Examination</td>
+                <td class="p-3">Prof. V. Sharma</td>
+                <td class="p-3">285</td>
+                <td class="p-3 text-emerald-400 font-bold">270</td>
+                <td class="p-3">15</td>
+                <td class="p-3">3.2 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.7 / 5</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Hostel</td>
+                <td class="p-3">Mr. K. Rajesh</td>
+                <td class="p-3">195</td>
+                <td class="p-3 text-emerald-400 font-bold">188</td>
+                <td class="p-3">7</td>
+                <td class="p-3">1.8 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.9 / 5</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">IT Support</td>
+                <td class="p-3">Mr. Amit Patel</td>
+                <td class="p-3">140</td>
+                <td class="p-3 text-emerald-400 font-bold">135</td>
+                <td class="p-3">5</td>
+                <td class="p-3">1.2 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.9 / 5</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Transport</td>
+                <td class="p-3">Mr. N. Singh</td>
+                <td class="p-3">76</td>
+                <td class="p-3 text-emerald-400 font-bold">72</td>
+                <td class="p-3">4</td>
+                <td class="p-3">2.1 hrs</td>
+                <td class="p-3 text-amber-400">★ 4.5 / 5</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- ==================== MODAL 1: RAISE NEW TICKET ==================== -->
+  <div id="modal-new-ticket" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-2xl rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-400 flex items-center justify-center">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <h3 class="font-bold text-white text-lg">Raise Support Ticket</h3>
+        </div>
+        <button onclick="closeNewTicketModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-new-ticket" onsubmit="handleCreateTicket(event)" class="space-y-4 text-xs">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-slate-300 font-medium">Student Name *</label>
+            <input type="text" id="input-student-name" required value="Ananya Sharma" class="glass-input p-2.5 rounded-lg w-full">
+          </div>
+          <div class="space-y-1">
+            <label class="text-slate-300 font-medium">Student ID *</label>
+            <input type="text" id="input-student-id" required value="2026-CSE-042" class="glass-input p-2.5 rounded-lg w-full">
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-slate-300 font-medium">Subject / Title *</label>
+          <input type="text" id="input-subject" required placeholder="e.g. Discrepancy in Semester 4 Marksheet" class="glass-input p-2.5 rounded-lg w-full">
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="text-slate-300 font-medium">Detailed Query Description *</label>
+            <button type="button" onclick="triggerAutoAI()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Analyze with AI
+            </button>
+          </div>
+          <textarea id="input-description" rows="4" required onkeyup="liveAICheck()" placeholder="Describe your issue in detail. The AI engine will automatically determine priority and suggest department..." class="glass-input p-2.5 rounded-lg w-full leading-relaxed"></textarea>
+        </div>
+
+        <!-- AI Assistant Realtime Preview Box -->
+        <div id="ai-suggestion-box" class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-2 hidden">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-bold text-indigo-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-robot"></i> AI Engine Auto-Detection
+            </span>
+            <span id="ai-modal-confidence" class="text-emerald-400 font-semibold">94% match</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span class="text-slate-400">Suggested Dept:</span> <strong id="ai-suggest-dept" class="text-slate-200">Academic</strong></div>
+            <div><span class="text-slate-400">Suggested Priority:</span> <strong id="ai-suggest-priority" class="text-amber-400">High</strong></div>
+          </div>
+          <div class="pt-1 border-t border-indigo-500/20 text-[11px]">
+            <span class="text-slate-400">Draft Solution Preview:</span>
+            <p id="ai-suggest-solution" class="text-slate-300 italic mt-0.5">Recommended steps will appear here.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-slate-300 font-medium">Department *</label>
+            <select id="input-department" required class="glass-input p-2.5 rounded-lg w-full bg-slate-900">
+              <option value="Academic">Academic Affairs</option>
+              <option value="Finance">Finance & Fees</option>
+              <option value="Hostel">Hostel & Accommodations</option>
+              <option value="Examination">Examination Cell</option>
+              <option value="IT Support">IT & Portal Support</option>
+              <option value="Transport">Campus Transport</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-slate-300 font-medium">Priority *</label>
+            <select id="input-priority" required class="glass-input p-2.5 rounded-lg w-full bg-slate-900">
+              <option value="Low">Low (General Inquiry)</option>
+              <option value="Medium" selected>Medium (Standard)</option>
+              <option value="High">High (Important)</option>
+              <option value="Urgent">Urgent (Immediate SLA)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeNewTicketModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white font-medium">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 text-white font-semibold shadow-lg shadow-indigo-600/30">
+            Submit Ticket
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== MODAL 2: TICKET DETAILED VIEW & STAFF RESOLUTION ==================== -->
+  <div id="modal-ticket-detail" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-3xl rounded-2xl p-6 space-y-5 border border-slate-700 shadow-2xl relative max-h-[92vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="detail-ticket-id" class="text-xs font-bold text-indigo-400 px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20">#TK-1001</span>
+            <span id="detail-status-badge"></span>
+            <span id="detail-priority-badge"></span>
+          </div>
+          <h3 id="detail-subject" class="text-lg font-bold text-white mt-1">Ticket Subject Header</h3>
+        </div>
+        <button onclick="closeTicketDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Content Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+        
+        <!-- Left 2 Cols: Details, Timeline, Updates -->
+        <div class="md:col-span-2 space-y-5">
+          
+          <!-- Student Description Box -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-slate-400 text-[11px]">
+              <span>Submitted by: <strong id="detail-student-info" class="text-slate-200">Ananya Sharma (2026-CSE-042)</strong></span>
+              <span id="detail-date" class="text-slate-400">Oct 09, 2026</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200 leading-relaxed" id="detail-description">
+              Description details...
+            </div>
+          </div>
+
+          <!-- Staff Resolution Editor (Visible in Staff Mode or when responding) -->
+          <div id="staff-resolution-box" class="space-y-3 p-4 rounded-xl bg-slate-900/60 border border-indigo-500/30">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-indigo-300 text-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-user-gear"></i> Staff Resolution & Response Actions
+              </span>
+              <!-- Response template selector -->
+              <select id="select-template" onchange="applyResponseTemplate()" class="glass-input text-[11px] px-2 py-1 rounded bg-slate-900 text-slate-300">
+                <option value="">Insert Quick Template...</option>
+                <option value="1">Hall Ticket Printed / Dispatched</option>
+                <option value="2">Fee Refund Processed</option>
+                <option value="3">Hostel Maintenance Assigned</option>
+                <option value="4">General Information Standard Reply</option>
+              </select>
+            </div>
+
+            <textarea id="staff-response-input" rows="3" class="glass-input p-2.5 rounded-lg w-full text-xs" placeholder="Type official resolution update or instructions for the student..."></textarea>
+
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <select id="update-status-select" class="glass-input px-2.5 py-1.5 rounded-lg bg-slate-900 text-xs">
+                  <option value="Open">Status: Open</option>
+                  <option value="In Progress">Status: In Progress</option>
+                  <option value="Resolved">Status: Resolved</option>
+                  <option value="Closed">Status: Closed</option>
+                </select>
+                <select id="update-staff-select" class="glass-input px-2.5 py-1.5 rounded-lg bg-slate-900 text-xs">
+                  <option value="Dr. Ramesh Kumar">Assign: Dr. Ramesh Kumar</option>
+                  <option value="Ms. S. Lakshmi">Assign: Ms. S. Lakshmi</option>
+                  <option value="Mr. K. Rajesh">Assign: Mr. K. Rajesh</option>
+                  <option value="Prof. V. Sharma">Assign: Prof. V. Sharma</option>
+                  <option value="Mr. Amit Patel">Assign: Mr. Amit Patel</option>
+                </select>
+              </div>
+
+              <button onclick="saveTicketResolution()" class="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md">
+                Update Ticket
+              </button>
+            </div>
+          </div>
+
+          <!-- Ticket Resolution & Communication History -->
+          <div class="space-y-3">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider text-slate-400">Resolution History & Logs</h4>
+            <div id="detail-history-container" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Student Feedback Rating (Visible if Resolved) -->
+          <div id="student-rating-box" class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 hidden">
+            <span class="font-bold text-slate-200 text-xs">Student Resolution Feedback</span>
+            <div class="flex items-center gap-2">
+              <div class="flex text-amber-400 gap-1 text-sm">
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+                <i class="fa-solid fa-star"></i>
+              </div>
+              <span class="text-slate-400 text-xs">"Prompt resolution! Thank you to the examination team."</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right 1 Col: Metadata & AI Recommendations -->
+        <div class="space-y-4 border-t md:border-t-0 md:border-l border-slate-800 md:pl-5">
+          
+          <div class="space-y-3">
+            <div>
+              <p class="text-[10px] uppercase font-bold text-slate-400">Department</p>
+              <p id="detail-department" class="text-xs font-semibold text-white mt-0.5">Academic Affairs</p>
+            </div>
+
+            <div>
+              <p class="text-[10px] uppercase font-bold text-slate-400">Assigned Officer</p>
+              <p id="detail-assigned-staff" class="text-xs font-semibold text-indigo-300 mt-0.5">Dr. Ramesh Kumar</p>
+            </div>
+
+            <div>
+              <p class="text-[10px] uppercase font-bold text-slate-400">Target SLA Resolution Window</p>
+              <p id="detail-sla" class="text-xs font-semibold text-amber-400 mt-0.5">4 Hours (Target: Today 4:00 PM)</p>
+            </div>
+          </div>
+
+          <!-- AI Suggested Resolution Draft for Staff -->
+          <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 space-y-2">
+            <span class="font-bold text-indigo-300 text-[11px] flex items-center gap-1">
+              <i class="fa-solid fa-robot"></i> AI Recommended Quick Response
+            </span>
+            <p id="detail-ai-recommendation" class="text-[11px] text-slate-300 italic leading-relaxed">
+              AI suggested draft response will load here.
+            </p>
+            <button onclick="copyAIRecToResponse()" class="w-full py-1 text-[10px] font-bold rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 transition-all">
+              Use Draft Response
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    // ==========================================
+    // 1. DATA STATE & MOCK DATA SETUP
+    // ==========================================
+
+    let currentRole = 'student'; // 'student' | 'staff' | 'sandbox' | 'analytics'
+    let staffViewMode = 'table'; // 'table' | 'kanban'
+    let activeDetailTicketId = null;
+
+    // Initial Mock Tickets
+    let tickets = [
+      {
+        id: "TK-1001",
+        studentName: "Ananya Sharma",
+        studentId: "2026-CSE-042",
+        subject: "Hall Ticket not generated for End-Sem Exam",
+        description: "My attendance is above 85% in all subjects, but the portal still says Hall Ticket On Hold due to pending fee validation. I have already cleared my dues yesterday.",
+        department: "Examination",
+        priority: "Urgent",
+        status: "In Progress",
+        assignedStaff: "Prof. V. Sharma",
+        createdAt: "2026-10-09 08:30 AM",
+        slaTarget: "4 Hours",
+        history: [
+          { date: "2026-10-09 08:30 AM", author: "Ananya Sharma", text: "Ticket submitted via Student Portal." },
+          { date: "2026-10-09 08:32 AM", author: "EduDesk AI Engine", text: "Auto-categorized as Examination / Urgent priority. SLA set to 4h." },
+          { date: "2026-10-09 09:15 AM", author: "Prof. V. Sharma", text: "Verified fee clearance with Finance desk. Hall ticket unlock in progress." }
+        ],
+        feedbackRating: 5
+      },
+      {
+        id: "TK-1002",
+        studentName: "Ananya Sharma",
+        studentId: "2026-CSE-042",
+        subject: "Hostel Block B Room 304 AC Cooling Issue",
+        description: "The air conditioner in room 304 has been leaking water and not cooling since yesterday evening.",
+        department: "Hostel",
+        priority: "Medium",
+        status: "Open",
+        assignedStaff: "Mr. K. Rajesh",
+        createdAt: "2026-10-09 09:10 AM",
+        slaTarget: "24 Hours",
+        history: [
+          { date: "2026-10-09 09:10 AM", author: "Ananya Sharma", text: "Ticket created." },
+          { date: "2026-10-09 09:11 AM", author: "EduDesk AI Engine", text: "Assigned to Hostel Facilities team." }
+        ],
+        feedbackRating: null
+      },
+      {
+        id: "TK-1003",
+        studentName: "Rohan Verma",
+        studentId: "2026-ECE-110",
+        subject: "Duplicate Fee Receipt Request for Tax Deduction",
+        description: "Need official stamped fee receipt for Semester 3 tuition fee payment made in July.",
+        department: "Finance",
+        priority: "Low",
+        status: "Resolved",
+        assignedStaff: "Ms. S. Lakshmi",
+        createdAt: "2026-10-08 11:20 AM",
+        slaTarget: "48 Hours",
+        history: [
+          { date: "2026-10-08 11:20 AM", author: "Rohan Verma", text: "Ticket submitted." },
+          { date: "2026-10-08 02:45 PM", author: "Ms. S. Lakshmi", text: "Official digitally signed receipt generated and emailed to student." }
+        ],
+        feedbackRating: 5
+      },
+      {
+        id: "TK-1004",
+        studentName: "Priya Patel",
+        studentId: "2026-MEC-015",
+        subject: "Course Elective Switch from AI to Robotics",
+        description: "Requesting department transfer for Elective III from CS402 to ME408 due to schedule collision.",
+        department: "Academic",
+        priority: "High",
+        status: "Open",
+        assignedStaff: "Dr. Ramesh Kumar",
+        createdAt: "2026-10-09 07:45 AM",
+        slaTarget: "12 Hours",
+        history: [
+          { date: "2026-10-09 07:45 AM", author: "Priya Patel", text: "Ticket raised." }
+        ],
+        feedbackRating: null
+      },
+      {
+        id: "TK-1005",
+        studentName: "Karan Singh",
+        studentId: "2026-CSE-088",
+        subject: "Campus Wi-Fi Authentication Failure in Library",
+        description: "Student portal login works fine, but Wi-Fi login returns 'Radius Auth Timeout' error in Central Library.",
+        department: "IT Support",
+        priority: "Medium",
+        status: "Resolved",
+        assignedStaff: "Mr. Amit Patel",
+        createdAt: "2026-10-08 04:00 PM",
+        slaTarget: "8 Hours",
+        history: [
+          { date: "2026-10-08 04:00 PM", author: "Karan Singh", text: "Ticket submitted." },
+          { date: "2026-10-08 05:15 PM", author: "Mr. Amit Patel", text: "Access point 4 in Central library rebooted and MAC address re-indexed." }
+        ],
+        feedbackRating: 4
+      }
+    ];
+
+    // Standard Response Templates for Staff
+    const responseTemplates = {
+      "1": "Dear Student, your hall ticket issue has been reviewed. Your attendance records are verified and hall ticket is now unlocked for download on the student portal.",
+      "2": "Dear Student, your fee payment / refund receipt has been processed. The reference copy is updated in your account financial statement.",
+      "3": "Dear Resident, maintenance staff has been dispatched to your room. Expected resolution within 2 hours.",
+      "4": "Dear Student, your query has been logged with the department. Please allow up to 24 hours for official verification."
+    };
+
+
+    // ==========================================
+    // 2. SIMULATED AI NLP CLASSIFIER LOGIC
+    // ==========================================
+
+    function classifyQueryNLP(text) {
+      if (!text || text.trim().length < 5) {
+        return {
+          department: "Academic",
+          priority: "Medium",
+          sla: "24 Hours",
+          confidence: 50,
+          tags: ["general"],
+          solution: "Please enter more detailed text to receive an automated AI resolution draft."
+        };
+      }
+
+      const lower = text.toLowerCase();
+      let dept = "Academic";
+      let priority = "Medium";
+      let sla = "24 Hours";
+      let confidence = 88;
+      let tags = [];
+      let solution = "";
+
+      // Rule-based NLP Keyword Matching
+      if (lower.includes("exam") || lower.includes("hall ticket") || lower.includes("marksheet") || lower.includes("grade") || lower.includes("revaluation")) {
+        dept = "Examination";
+        tags.push("exam-cell", "hall-ticket", "grades");
+        if (lower.includes("hall ticket") || lower.includes("today") || lower.includes("tomorrow")) {
+          priority = "Urgent";
+          sla = "4 Hours";
+          confidence = 96;
+          solution = "Verify student attendance >= 75% and ensure no pending financial holds exist in the ERP system.";
+        } else {
+          priority = "High";
+          sla = "12 Hours";
+          confidence = 91;
+          solution = "Revaluation and marksheet requests require standard 3-working-day verification by Exam Board.";
+        }
+      } 
+      else if (lower.includes("fee") || lower.includes("payment") || lower.includes("scholarship") || lower.includes("receipt") || lower.includes("fine") || lower.includes("dues")) {
+        dept = "Finance";
+        tags.push("finance", "payments", "receipts");
+        priority = lower.includes("fine") || lower.includes("deadline") ? "High" : "Medium";
+        sla = priority === "High" ? "12 Hours" : "24 Hours";
+        confidence = 94;
+        solution = "Cross-check payment gateway transaction reference against bank settlement logs.";
+      } 
+      else if (lower.includes("hostel") || lower.includes("room") || lower.includes("ac") || lower.includes("water") || lower.includes("mess") || lower.includes("bed")) {
+        dept = "Hostel";
+        tags.push("hostel-facility", "maintenance");
+        priority = lower.includes("water") || lower.includes("leak") || lower.includes("ac") ? "High" : "Medium";
+        sla = "8 Hours";
+        confidence = 93;
+        solution = "Issue work order to campus electrician / plumber technician for immediate room inspection.";
+      }
+      else if (lower.includes("wifi") || lower.includes("wi-fi") || lower.includes("portal") || lower.includes("password") || lower.includes("login") || lower.includes("email")) {
+        dept = "IT Support";
+        tags.push("it-support", "wifi", "credentials");
+        priority = "Medium";
+        sla = "8 Hours";
+        confidence = 95;
+        solution = "Reset LDAP portal authentication cache or verify MAC address binding in campus RADIUS server.";
+      }
+      else if (lower.includes("bus") || lower.includes("transport") || lower.includes("route") || lower.includes("pass")) {
+        dept = "Transport";
+        tags.push("transportation", "bus-pass");
+        priority = "Low";
+        sla = "48 Hours";
+        confidence = 90;
+        solution = "Check bus route schedule and verify transport pass digital ID badge validity.";
+      }
+      else {
+        dept = "Academic";
+        tags.push("academic", "curriculum");
+        priority = "Medium";
+        sla = "24 Hours";
+        confidence = 82;
+        solution = "Route query to Head of Department (HOD) academic coordinator for curriculum guidance.";
+      }
+
+      return { department: dept, priority, sla, confidence, tags, solution };
+    }
+
+
+    // ==========================================
+    // 3. UI TAB SWITCHER & INITIALIZATION
+    // ==========================================
+
+    function switchTab(tabId) {
+      currentRole = tabId;
+
+      // Update Navigation Buttons Visuals
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
+        activeBtn.classList.remove('text-slate-400');
+      }
+
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+
+      // Show selected tab content
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.remove('hidden');
+
+      // Refresh corresponding views
+      if (tabId === 'student') renderStudentTickets();
+      if (tabId === 'staff') renderStaffView();
+      if (tabId === 'analytics') renderCharts();
+    }
+
+
+    // ==========================================
+    // 4. STUDENT PORTAL FUNCTIONALITY
+    // ==========================================
+
+    function renderStudentTickets() {
+      const container = document.getElementById('student-ticket-container');
+      const search = document.getElementById('student-search').value.toLowerCase();
+      const statusFilter = document.getElementById('student-filter-status').value;
+      const deptFilter = document.getElementById('student-filter-dept').value;
+
+      // Filter tickets for current student view
+      const filtered = tickets.filter(t => {
+        const matchesSearch = t.subject.toLowerCase().includes(search) || t.id.toLowerCase().includes(search) || t.description.toLowerCase().includes(search);
+        const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
+        const matchesDept = deptFilter === 'ALL' || t.department === deptFilter;
+        return matchesSearch && matchesStatus && matchesDept;
+      });
+
+      // Update stats counters
+      document.getElementById('stat-student-total').innerText = tickets.length;
+      document.getElementById('stat-student-progress').innerText = tickets.filter(t => t.status === 'In Progress' || t.status === 'Open').length;
+      document.getElementById('stat-student-resolved').innerText = tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-500">
+            <i class="fa-solid fa-inbox text-3xl mb-2"></i>
+            <p class="text-xs">No tickets match your filter criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ticket => `
+        <div onclick="openTicketDetailModal('${ticket.id}')" class="glass-card p-4 rounded-xl border border-slate-800 hover:border-indigo-500/50 transition-all cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1.5 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold text-indigo-400 font-mono">${ticket.id}</span>
+              ${getStatusBadge(ticket.status)}
+              ${getPriorityBadge(ticket.priority)}
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium">${ticket.department}</span>
+            </div>
+            <h4 class="font-bold text-sm text-white group-hover:text-indigo-300 transition-colors">${escapeHtml(ticket.subject)}</h4>
+            <p class="text-xs text-slate-400 line-clamp-1">${escapeHtml(ticket.description)}</p>
+          </div>
+
+          <div class="flex items-center justify-between md:justify-end gap-4 text-xs text-slate-400 border-t md:border-t-0 pt-2 md:pt-0 border-slate-800">
+            <div class="text-left md:text-right">
+              <p class="text-[10px] text-slate-500">Assigned Staff</p>
+              <p class="font-medium text-slate-300">${ticket.assignedStaff}</p>
+            </div>
+            <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1"></i>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openNewTicketModal() {
+      document.getElementById('modal-new-ticket').classList.remove('hidden');
+    }
+
+    function closeNewTicketModal() {
+      document.getElementById('modal-new-ticket').classList.add('hidden');
+      document.getElementById('form-new-ticket').reset();
+      document.getElementById('ai-suggestion-box').classList.add('hidden');
+    }
+
+    function liveAICheck() {
+      const desc = document.getElementById('input-description').value;
+      if (desc.length > 15) {
+        const ai = classifyQueryNLP(desc);
+        document.getElementById('ai-suggestion-box').classList.remove('hidden');
+        document.getElementById('ai-suggest-dept').innerText = ai.department;
+        document.getElementById('ai-suggest-priority').innerText = ai.priority;
+        document.getElementById('ai-suggest-solution').innerText = ai.solution;
+        document.getElementById('ai-modal-confidence').innerText = `${ai.confidence}% match`;
+
+        // Sync inputs automatically with high confidence
+        document.getElementById('input-department').value = ai.department;
+        document.getElementById('input-priority').value = ai.priority;
+      } else {
+        document.getElementById('ai-suggestion-box').classList.add('hidden');
+      }
+    }
+
+    function triggerAutoAI() {
+      liveAICheck();
+      showToast('AI classifier updated suggested fields!', 'info');
+    }
+
+    function handleCreateTicket(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('input-student-name').value;
+      const studentId = document.getElementById('input-student-id').value;
+      const subject = document.getElementById('input-subject').value;
+      const description = document.getElementById('input-description').value;
+      const department = document.getElementById('input-department').value;
+      const priority = document.getElementById('input-priority').value;
+
+      // Assign default officer based on dept
+      const staffMap = {
+        "Academic": "Dr. Ramesh Kumar",
+        "Finance": "Ms. S. Lakshmi",
+        "Hostel": "Mr. K. Rajesh",
+        "Examination": "Prof. V. Sharma",
+        "IT Support": "Mr. Amit Patel",
+        "Transport": "Mr. N. Singh"
+      };
+
+      const newId = `TK-${1000 + tickets.length + 1}`;
+      const now = new Date().toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+      const newTicket = {
+        id: newId,
+        studentName: name,
+        studentId: studentId,
+        subject: subject,
+        description: description,
+        department: department,
+        priority: priority,
+        status: "Open",
+        assignedStaff: staffMap[department] || "Department Desk",
+        createdAt: now,
+        slaTarget: priority === "Urgent" ? "4 Hours" : "24 Hours",
+        history: [
+          { date: now, author: name, text: "Ticket submitted via Student Portal." },
+          { date: now, author: "EduDesk AI Engine", text: `Automatically routed to ${department} department. SLA target: ${priority === "Urgent" ? "4 Hours" : "24 Hours"}` }
+        ],
+        feedbackRating: null
+      };
+
+      tickets.unshift(newTicket);
+      closeNewTicketModal();
+      renderStudentTickets();
+      showToast(`Ticket ${newId} raised successfully!`, 'success');
+    }
+
+
+    // ==========================================
+    // 5. STAFF WORKSPACE & KANBAN LOGIC
+    // ==========================================
+
+    function setStaffView(mode) {
+      staffViewMode = mode;
+      document.getElementById('btn-view-table').className = mode === 'table' ? 'px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white transition-all' : 'px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition-all';
+      document.getElementById('btn-view-kanban').className = mode === 'kanban' ? 'px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white transition-all' : 'px-3 py-1.5 text-xs font-semibold rounded-md text-slate-400 hover:text-white transition-all';
+
+      if (mode === 'table') {
+        document.getElementById('staff-table-view').classList.remove('hidden');
+        document.getElementById('staff-kanban-view').classList.add('hidden');
+      } else {
+        document.getElementById('staff-table-view').classList.add('hidden');
+        document.getElementById('staff-kanban-view').classList.remove('hidden');
+      }
+      renderStaffView();
+    }
+
+    function renderStaffView() {
+      const search = document.getElementById('staff-search').value.toLowerCase();
+      const deptFilter = document.getElementById('staff-filter-dept').value;
+      const priorityFilter = document.getElementById('staff-filter-priority').value;
+
+      const filtered = tickets.filter(t => {
+        const matchesSearch = t.subject.toLowerCase().includes(search) || t.id.toLowerCase().includes(search) || t.studentName.toLowerCase().includes(search) || t.studentId.toLowerCase().includes(search);
+        const matchesDept = deptFilter === 'ALL' || t.department === deptFilter;
+        const matchesPriority = priorityFilter === 'ALL' || t.priority === priorityFilter;
+        return matchesSearch && matchesDept && matchesPriority;
+      });
+
+      document.getElementById('staff-results-count').innerText = filtered.length;
+
+      // Update Staff Metrics Counter
+      document.getElementById('staff-stat-unassigned').innerText = tickets.filter(t => t.status === 'Open').length;
+      document.getElementById('staff-stat-progress').innerText = tickets.filter(t => t.status === 'In Progress').length;
+      document.getElementById('staff-stat-resolved').innerText = tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+      document.getElementById('staff-stat-urgent').innerText = tickets.filter(t => t.priority === 'Urgent').length;
+      document.getElementById('open-tickets-badge').innerText = tickets.filter(t => t.status === 'Open' || t.status === 'In Progress').length;
+
+      if (staffViewMode === 'table') {
+        renderStaffTable(filtered);
+      } else {
+        renderStaffKanban(filtered);
+      }
+    }
+
+    function renderStaffTable(list) {
+      const tbody = document.getElementById('staff-table-body');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-500">No tickets found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(t => `
+        <tr class="hover:bg-slate-900/60 transition-colors">
+          <td class="p-3.5 font-mono font-bold text-indigo-400">${t.id}</td>
+          <td class="p-3.5">
+            <p class="font-bold text-white">${escapeHtml(t.studentName)}</p>
+            <p class="text-[10px] text-slate-400">${t.studentId}</p>
+          </td>
+          <td class="p-3.5 max-w-xs">
+            <p class="font-medium text-slate-200 line-clamp-1">${escapeHtml(t.subject)}</p>
+          </td>
+          <td class="p-3.5 font-medium text-slate-300">${t.department}</td>
+          <td class="p-3.5">${getPriorityBadge(t.priority)}</td>
+          <td class="p-3.5 text-slate-300 font-medium">${t.assignedStaff}</td>
+          <td class="p-3.5">${getStatusBadge(t.status)}</td>
+          <td class="p-3.5 text-right">
+            <button onclick="openTicketDetailModal('${t.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white font-medium text-xs transition-all border border-indigo-500/30">
+              Manage
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderStaffKanban(list) {
+      const cols = {
+        'Open': document.getElementById('kanban-col-open'),
+        'In Progress': document.getElementById('kanban-col-progress'),
+        'Resolved': document.getElementById('kanban-col-resolved'),
+        'Closed': document.getElementById('kanban-col-closed')
+      };
+
+      const counts = { 'Open': 0, 'In Progress': 0, 'Resolved': 0, 'Closed': 0 };
+
+      // Clear columns
+      Object.keys(cols).forEach(k => cols[k].innerHTML = '');
+
+      list.forEach(t => {
+        if (cols[t.status]) {
+          counts[t.status]++;
+          cols[t.status].innerHTML += `
+            <div onclick="openTicketDetailModal('${t.id}')" class="glass-card p-3.5 rounded-xl border border-slate-800 hover:border-indigo-500/50 cursor-pointer space-y-2 transition-all">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono font-bold text-indigo-400">${t.id}</span>
+                ${getPriorityBadge(t.priority)}
+              </div>
+              <h5 class="font-bold text-xs text-white line-clamp-2">${escapeHtml(t.subject)}</h5>
+              <div class="flex items-center justify-between text-[10px] text-slate-400 border-t border-slate-800/80 pt-2">
+                <span>${t.studentName}</span>
+                <span class="text-indigo-300">${t.department}</span>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      // Update Counts
+      document.getElementById('kanban-count-open').innerText = counts['Open'];
+      document.getElementById('kanban-count-progress').innerText = counts['In Progress'];
+      document.getElementById('kanban-count-resolved').innerText = counts['Resolved'];
+      document.getElementById('kanban-count-closed').innerText = counts['Closed'];
+    }
+
+
+    // ==========================================
+    // 6. TICKET DETAIL & RESOLUTION MODAL
+    // ==========================================
+
+    function openTicketDetailModal(id) {
+      const ticket = tickets.find(t => t.id === id);
+      if (!ticket) return;
+
+      activeDetailTicketId = id;
+
+      document.getElementById('detail-ticket-id').innerText = ticket.id;
+      document.getElementById('detail-subject').innerText = ticket.subject;
+      document.getElementById('detail-description').innerText = ticket.description;
+      document.getElementById('detail-student-info').innerText = `${ticket.studentName} (${ticket.studentId})`;
+      document.getElementById('detail-date').innerText = ticket.createdAt;
+      document.getElementById('detail-department').innerText = ticket.department;
+      document.getElementById('detail-assigned-staff').innerText = ticket.assignedStaff;
+      document.getElementById('detail-sla').innerText = `${ticket.slaTarget} Target Window`;
+
+      document.getElementById('detail-status-badge').innerHTML = getStatusBadge(ticket.status);
+      document.getElementById('detail-priority-badge').innerHTML = getPriorityBadge(ticket.priority);
+
+      // Pre-fill staff editor controls
+      document.getElementById('update-status-select').value = ticket.status;
+      document.getElementById('update-staff-select').value = ticket.assignedStaff;
+
+      // Populate AI Smart Suggestion inside detail modal
+      const ai = classifyQueryNLP(ticket.description);
+      document.getElementById('detail-ai-recommendation').innerText = `"${ai.solution}"`;
+
+      // Render History Timeline
+      const historyContainer = document.getElementById('detail-history-container');
+      historyContainer.innerHTML = ticket.history.map(h => `
+        <div class="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between text-[10px] text-slate-400">
+            <span class="font-bold text-indigo-300">${escapeHtml(h.author)}</span>
+            <span>${h.date}</span>
+          </div>
+          <p class="text-slate-300 text-xs">${escapeHtml(h.text)}</p>
+        </div>
+      `).join('');
+
+      // Show/Hide Student Rating Box if resolved
+      const ratingBox = document.getElementById('student-rating-box');
+      if (ticket.status === 'Resolved' || ticket.status === 'Closed') {
+        ratingBox.classList.remove('hidden');
+      } else {
+        ratingBox.classList.add('hidden');
+      }
+
+      document.getElementById('modal-ticket-detail').classList.remove('hidden');
+    }
+
+    function closeTicketDetailModal() {
+      document.getElementById('modal-ticket-detail').classList.add('hidden');
+      document.getElementById('staff-response-input').value = '';
+      activeDetailTicketId = null;
+    }
+
+    function applyResponseTemplate() {
+      const templateId = document.getElementById('select-template').value;
+      if (templateId && responseTemplates[templateId]) {
+        document.getElementById('staff-response-input').value = responseTemplates[templateId];
+      }
+    }
+
+    function copyAIRecToResponse() {
+      const rec = document.getElementById('detail-ai-recommendation').innerText;
+      document.getElementById('staff-response-input').value = rec.replace(/^"|"$/g, '');
+      showToast('AI resolution draft copied to response box!', 'info');
+    }
+
+    function saveTicketResolution() {
+      if (!activeDetailTicketId) return;
+
+      const ticket = tickets.find(t => t.id === activeDetailTicketId);
+      if (!ticket) return;
+
+      const responseText = document.getElementById('staff-response-input').value.trim();
+      const newStatus = document.getElementById('update-status-select').value;
+      const newStaff = document.getElementById('update-staff-select').value;
+
+      const now = new Date().toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+      ticket.status = newStatus;
+      ticket.assignedStaff = newStaff;
+
+      if (responseText.length > 0) {
+        ticket.history.push({
+          date: now,
+          author: `${newStaff} (Official Response)`,
+          text: responseText
+        });
+      } else {
+        ticket.history.push({
+          date: now,
+          author: "Staff Admin",
+          text: `Ticket status updated to ${newStatus}. Assigned officer: ${newStaff}.`
+        });
+      }
+
+      closeTicketDetailModal();
+      renderStudentTickets();
+      renderStaffView();
+      showToast(`Ticket ${ticket.id} updated to ${newStatus}`, 'success');
+    }
+
+
+    // ==========================================
+    // 7. AI CLASSIFIER SANDBOX PAGE
+    // ==========================================
+
+    function loadSandboxPreset(id) {
+      const presets = {
+        1: "I have not received my semester hall ticket for the upcoming examinations starting Monday, even though all attendance criteria are met.",
+        2: "I paid my semester tuition fees via UPI yesterday, but the portal is still displaying fee pending and showing a late fine of Rs. 1000.",
+        3: "Room 102 in Hostel Block A has no hot water in the bathroom and the ceiling fan is making loud noises.",
+        4: "My student campus WiFi credential returns authorization failed every time I attempt connecting from the central library."
+      };
+      document.getElementById('sandbox-query-input').value = presets[id] || '';
+      runSandboxAI();
+    }
+
+    function runSandboxAI() {
+      const text = document.getElementById('sandbox-query-input').value;
+      const res = classifyQueryNLP(text);
+
+      document.getElementById('ai-out-dept').innerText = res.department;
+      document.getElementById('ai-out-priority').innerText = res.priority;
+      document.getElementById('ai-out-sla').innerText = res.sla;
+      document.getElementById('ai-confidence-badge').innerText = `Confidence: ${res.confidence}%`;
+      document.getElementById('ai-out-kb').innerText = res.solution;
+
+      const tagsContainer = document.getElementById('ai-out-tags');
+      tagsContainer.innerHTML = res.tags.map(tag => `
+        <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono text-[10px]">#${tag}</span>
+      `).join('');
+
+      showToast('NLP classification completed!', 'success');
+    }
+
+
+    // ==========================================
+    // 8. CHART.JS ANALYTICS DASHBOARD
+    // ==========================================
+
+    let deptChart = null;
+    let trendChart = null;
+
+    function renderCharts() {
+      // Department Doughnut Chart
+      const deptCtx = document.getElementById('chart-department');
+      if (deptCtx) {
+        if (deptChart) deptChart.destroy();
+        deptChart = new Chart(deptCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Academic', 'Finance', 'Examination', 'Hostel', 'IT Support', 'Transport'],
+            datasets: [{
+              data: [412, 320, 285, 195, 140, 76],
+              backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // Monthly Trend Bar Chart
+      const trendCtx = document.getElementById('chart-trends');
+      if (trendCtx) {
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(trendCtx, {
+          type: 'bar',
+          data: {
+            labels: ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            datasets: [
+              {
+                label: 'Resolved Tickets',
+                data: [180, 220, 310, 290, 340, 410],
+                backgroundColor: '#6366f1',
+                borderRadius: 6
+              },
+              {
+                label: 'SLA Met (%)',
+                data: [91, 93, 94, 92, 95, 97],
+                type: 'line',
+                borderColor: '#10b981',
+                borderWidth: 2,
+                pointBackgroundColor: '#10b981'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+            },
+            scales: {
+              x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+              y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+          }
+        });
+      }
+    }
+
+    function exportReport() {
+      let csv = "Ticket ID,Student Name,Department,Priority,Status,Assigned Staff\n";
+      tickets.forEach(t => {
+        csv += `"${t.id}","${t.studentName}","${t.department}","${t.priority}","${t.status}","${t.assignedStaff}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `EduDesk_Helpdesk_Summary_${new Date().toISOString().slice(0,10)}.csv`);
+      a.click();
+      showToast('Summary report CSV generated and downloaded!', 'info');
+    }
+
+
+    // ==========================================
+    // 9. HELPER FUNCTIONS & UI UTILITIES
+    // ==========================================
+
+    function getStatusBadge(status) {
+      switch (status) {
+        case 'Open':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">Open</span>`;
+        case 'In Progress':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">In Progress</span>`;
+        case 'Resolved':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Resolved</span>`;
+        case 'Closed':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-500/20 text-slate-400 border border-slate-500/30">Closed</span>`;
+        default:
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-800 text-slate-300">${status}</span>`;
+      }
+    }
+
+    function getPriorityBadge(priority) {
+      switch (priority) {
+        case 'Urgent':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">Urgent</span>`;
+        case 'High':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">High</span>`;
+        case 'Medium':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Medium</span>`;
+        case 'Low':
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 text-slate-400">Low</span>`;
+        default:
+          return `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 text-slate-300">${priority}</span>`;
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-950/90 border-emerald-500/40 text-emerald-200',
+        info: 'bg-indigo-950/90 border-indigo-500/40 text-indigo-200',
+        warning: 'bg-amber-950/90 border-amber-500/40 text-amber-200'
+      };
+
+      toast.className = `px-4 py-3 rounded-xl border backdrop-blur-md text-xs font-medium shadow-2xl flex items-center gap-2 pointer-events-auto transform transition-all duration-300 translate-y-2 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} text-base"></i>
+        <span>${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;") : '';
+    }
+
+    // Initialize application state on page load
+    window.onload = function() {
+      renderStudentTickets();
+      renderStaffView();
+    };
+  </script>
+</body>
+</html>
